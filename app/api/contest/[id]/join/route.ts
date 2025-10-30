@@ -2,10 +2,14 @@ import { cookies } from "next/headers"
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await request.json()
+    const body = await request.json()
+    const { userId } = body
     const contestId = params.id
 
+    console.log("[v0] Join request received:", { userId, contestId })
+
     if (!userId || !contestId) {
+      console.log("[v0] Missing userId or contestId")
       return Response.json({ error: "Missing userId or contestId" }, { status: 400 })
     }
 
@@ -22,12 +26,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
     cookieStore.set(joinedContestsKey, joinedArray.join(","), {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: "/",
+      httpOnly: false, // Allow client-side access
+      sameSite: "lax",
     })
 
-    console.log("[v0] User joined contest:", { userId, contestId, joinedArray })
-    return Response.json({ success: true, message: "Successfully joined contest" })
+    console.log("[v0] User joined contest successfully:", { userId, contestId, joinedArray })
+    return Response.json({ success: true, message: "Successfully joined contest", hasJoined: true })
   } catch (error) {
     console.error("[v0] Error joining contest:", error)
-    return Response.json({ error: "Failed to join contest" }, { status: 500 })
+    return Response.json({ success: false, message: "Failed to join contest", hasJoined: false }, { status: 200 })
   }
 }
