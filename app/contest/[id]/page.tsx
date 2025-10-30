@@ -64,34 +64,26 @@ export default function ContestDetailPage() {
   const handleJoinContest = async () => {
     try {
       setJoining(true)
-      setError(null)
       const user = localStorage.getItem("user")
       if (!user) {
         setError("Please login to join a contest")
-        setJoining(false)
         return
       }
 
       const userData = JSON.parse(user)
-      console.log("[v0] Attempting to join contest with userId:", userData.id)
-
       const response = await fetch(`/api/contest/${contestId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: userData.id }),
       })
 
-      const data = await response.json()
-      console.log("[v0] Join response:", data)
-
-      if (data.success) {
+      if (response.ok) {
         setHasJoined(true)
         setError(null)
       } else {
-        setError(data.message || "Failed to join contest")
+        setError("Failed to join contest")
       }
     } catch (err) {
-      console.error("[v0] Error in handleJoinContest:", err)
       setError(err instanceof Error ? err.message : "Failed to join contest")
     } finally {
       setJoining(false)
