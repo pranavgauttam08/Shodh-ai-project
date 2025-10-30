@@ -95,19 +95,25 @@ export default function ContestDetailPage() {
       setLoading(true)
       setError(null)
 
-      // Fetch contest details
       const contestResponse = await fetch(`/api/contest/${contestId}`)
-      if (!contestResponse.ok) throw new Error("Failed to fetch contest")
+      if (!contestResponse.ok) {
+        console.error("[v0] Contest API error:", contestResponse.status)
+        throw new Error("Failed to fetch contest")
+      }
+
       const contestData = await contestResponse.json()
       setContest(contestData)
 
-      // Fetch problems
       const problemsResponse = await fetch(`/api/contest/${contestId}/problems`)
-      if (!problemsResponse.ok) throw new Error("Failed to fetch problems")
-      const problemsData = await problemsResponse.json()
-      setProblems(problemsData)
+      if (problemsResponse.ok) {
+        const problemsData = await problemsResponse.json()
+        setProblems(problemsData)
+      } else {
+        console.error("[v0] Problems API error:", problemsResponse.status)
+        setProblems([])
+      }
     } catch (err) {
-      console.error("Error fetching contest data:", err)
+      console.error("[v0] Error fetching contest data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setLoading(false)
