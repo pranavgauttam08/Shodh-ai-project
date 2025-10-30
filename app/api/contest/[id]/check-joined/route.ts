@@ -1,3 +1,5 @@
+const joinedContests: Record<string, number[]> = {}
+
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const { userId } = await request.json()
@@ -7,11 +9,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return Response.json({ error: "Missing userId or contestId" }, { status: 400 })
     }
 
-    // Mock: Check if user has joined the contest
-    const joinedContests = JSON.parse(localStorage.getItem("joinedContests") || "{}")
     const userContests = joinedContests[userId] || []
     const hasJoined = userContests.includes(Number(contestId))
 
+    console.log("[v0] Checking join status:", { userId, contestId, hasJoined })
     return Response.json({ hasJoined })
   } catch (error) {
     console.error("[v0] Error checking contest join status:", error)
