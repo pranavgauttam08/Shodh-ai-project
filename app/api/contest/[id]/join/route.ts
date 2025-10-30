@@ -1,4 +1,4 @@
-const joinedContests: Record<string, number[]> = {}
+import { cookies } from "next/headers"
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -9,14 +9,22 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return Response.json({ error: "Missing userId or contestId" }, { status: 400 })
     }
 
-    if (!joinedContests[userId]) {
-      joinedContests[userId] = []
-    }
-    if (!joinedContests[userId].includes(Number(contestId))) {
-      joinedContests[userId].push(Number(contestId))
+    const cookieStore = await cookies()
+    const joinedContestsKey = `joined_contests_${userId}`
+    const existingJoined = cookieStore.get(joinedContestsKey)?.value || ""
+    const joinedArray = existingJoined ? existingJoined.split(",").map(Number) : []
+
+    if (!joinedArray.includes(Number(contestId))) {
+      joinedArray.push(Number(contestId))
     }
 
-    console.log("[v0] User joined contest:", { userId, contestId, joinedContests })
+    // Store as comma-separated string in cookie
+    cookieStore.set(joinedContestsKey, joinedArray.join(","), {
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+    })
+
+    console.log("[v0] User joined contest:", { userId, contestId, joinedArray })
     return Response.json({ success: true, message: "Successfully joined contest" })
   } catch (error) {
     console.error("[v0] Error joining contest:", error)
