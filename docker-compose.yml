@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shodh-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    networks:
+      - shodh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/contests"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - /tmp/judge:/tmp/judge
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shodh-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - shodh-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  shodh-network:
+    driver: bridge
+
+volumes:
+  judge-temp:
+    driver: local
